@@ -6,7 +6,7 @@ const port = 3000;
 let messages = [];
 
 app.get('/', (req, res) => {
-  res.send('Hello World!');
+  res.send('Denzel Coppens');
 });
 
 app.get("/api/v1/messages", (req, res)=>{
