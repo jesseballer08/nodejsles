@@ -1,9 +1,9 @@
 import express from 'express';
 import { list, get, create } from "../../../controllers/api/v1/messages.js";
-
+import { log } from "../../../middleware/logger.js";
 const app = express.Router();
 
-app.get("/", list);
+app.get("/", log, list);
 app.get("/:id", get);
 app.post("/", create);
 
