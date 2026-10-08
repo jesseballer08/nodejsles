@@ -40,7 +40,7 @@ export const create = async (req, res)=>{
     const result = {
         'status' : 'success',
         'data' : {
-            'message': 'Message created successfully'
+            'message': message
         }
     }
     res.json(result);
