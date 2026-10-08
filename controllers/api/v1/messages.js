@@ -1,32 +1,40 @@
+import mongoose from 'mongoose';
 import Message from '../../../models/api/v1/Message.js';
 
+// Zoek een bericht op MongoDB-id, of op volgnummer (0, 1, 2, ...)
+const findMessage = async (id) => {
+    if (mongoose.isValidObjectId(id) && String(id).length === 24) {
+        return Message.findById(id);
+    }
+    if (/^\d+$/.test(id)) {
+        return Message.findOne().sort({ createdAt: 1 }).skip(Number(id));
+    }
+    return null;
+};
 
-export const list = async (req, res)=>{
+const notFound = (res, id) =>
+    res.status(404).json({ status: 'fail', message: `Message ${id} not found`, data: null });
+
+export const list = async (req, res) => {
     const messages = await Message.find({});
-
-    
-    const result = {
-        'status': 'success',
-        'data': {
-            'messages': messages
-        }
-    }
-    res.json(result);
+    res.json({
+        status: 'success',
+        message: 'GETTING messages',
+        data: { messages }
+    });
 };
 
-export const get = async (req, res)=>{
-    try {
-        const message = await Message.findById(req.params.id);
-        if (!message) {
-            return res.status(404).json({ status: 'fail', data: { message: 'Message not found' } });
-        }
-        res.json({ status: 'success', data: { message } });
-    } catch (error) {
-        res.status(400).json({ status: 'fail', data: { message: 'Invalid id' } });
-    }
+export const get = async (req, res) => {
+    const message = await findMessage(req.params.id);
+    if (!message) return notFound(res, req.params.id);
+    res.json({
+        status: 'success',
+        message: `GETTING message ${req.params.id}`,
+        data: { message }
+    });
 };
 
-export const create = async (req, res)=>{
+export const create = async (req, res) => {
     const message = new Message();
     message.text = req.body.text;
     message.username = req.body.username;
@@ -34,42 +42,44 @@ export const create = async (req, res)=>{
     try {
         await message.save();
     } catch (error) {
-        return res.status(400).json({ status: 'error', message: error.message });
+        return res.status(400).json({ status: 'fail', message: error.message, data: null });
     }
 
-    const result = {
-        'status' : 'success',
-        'data' : {
-            'message': message
-        }
-    }
-    res.json(result);
+    res.json({
+        status: 'success',
+        message: 'Message created successfully',
+        data: { message }
+    });
 };
 
-export const update = async (req, res)=>{
+export const update = async (req, res) => {
+    const message = await findMessage(req.params.id);
+    if (!message) return notFound(res, req.params.id);
+
+    if (req.body.text !== undefined) message.text = req.body.text;
+    if (req.body.username !== undefined) message.username = req.body.username;
+
     try {
-        const message = await Message.findByIdAndUpdate(
-            req.params.id,
-            { text: req.body.text, username: req.body.username },
-            { returnDocument: 'after', runValidators: true }
-        );
-        if (!message) {
-            return res.status(404).json({ status: 'fail', data: { message: 'Message not found' } });
-        }
-        res.json({ status: 'success', data: { message } });
+        await message.save();
     } catch (error) {
-        res.status(400).json({ status: 'fail', data: { message: error.message } });
+        return res.status(400).json({ status: 'fail', message: error.message, data: null });
     }
+
+    res.json({
+        status: 'success',
+        message: `UPDATING message ${req.params.id}`,
+        data: { message }
+    });
 };
 
-export const remove = async (req, res)=>{
-    try {
-        const message = await Message.findByIdAndDelete(req.params.id);
-        if (!message) {
-            return res.status(404).json({ status: 'fail', data: { message: 'Message not found' } });
-        }
-        res.json({ status: 'success', data: null });
-    } catch (error) {
-        res.status(400).json({ status: 'fail', data: { message: 'Invalid id' } });
-    }
+export const remove = async (req, res) => {
+    const message = await findMessage(req.params.id);
+    if (!message) return notFound(res, req.params.id);
+
+    await message.deleteOne();
+    res.json({
+        status: 'success',
+        message: `DELETING message ${req.params.id}`,
+        data: { message }
+    });
 };
