@@ -6,17 +6,16 @@ const messageSchema = new Schema({
     createdAt: { type: Date, default: Date.now },
     username: { type: String, required: true }
 }, {
-    // Toon ook "user" en "message" in de JSON, zoals in de opdracht
-    toJSON: { virtuals: true, versionKey: false, transform: (doc, ret) => { delete ret.id; return ret; } }
+    // JSON exact zoals in de opdracht: { user, text, _id, __v }
+    toJSON: {
+        transform: (doc, ret) => ({
+            user: ret.username,
+            text: ret.text,
+            _id: ret._id,
+            __v: ret.__v
+        })
+    }
 });
-
-messageSchema.virtual('user')
-    .get(function () { return this.username; })
-    .set(function (v) { this.username = v; });
-
-messageSchema.virtual('message')
-    .get(function () { return this.text; })
-    .set(function (v) { this.text = v; });
 
 const Message = mongoose.model('Message', messageSchema);
 
