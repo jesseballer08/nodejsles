@@ -16,10 +16,14 @@ const notFound = (res, id) =>
     res.status(404).json({ status: 'fail', message: `Message ${id} not found`, data: null });
 
 export const list = async (req, res) => {
-    const messages = await Message.find({});
+    // GET /api/v1/messages?user=pikachu -> alleen berichten van die user
+    const user = req.query.user;
+    const messages = user
+        ? await Message.find({ username: user })
+        : await Message.find({});
     res.json({
         status: 'success',
-        message: 'GETTING messages',
+        message: user ? `Messages from user ${user}` : 'GETTING messages',
         data: { messages }
     });
 };
@@ -47,7 +51,7 @@ export const create = async (req, res) => {
 
     res.json({
         status: 'success',
-        message: 'Message created successfully',
+        message: 'Message saved',
         data: { message }
     });
 };
@@ -69,7 +73,7 @@ export const update = async (req, res) => {
 
     res.json({
         status: 'success',
-        message: `UPDATING message ${req.params.id}`,
+        message: 'Message updated',
         data: { message }
     });
 };
@@ -81,7 +85,7 @@ export const remove = async (req, res) => {
     await message.deleteOne();
     res.json({
         status: 'success',
-        message: `DELETING message ${req.params.id}`,
-        data: { message }
+        message: 'Message deleted',
+        data: { message: { _id: message._id } }
     });
 };
