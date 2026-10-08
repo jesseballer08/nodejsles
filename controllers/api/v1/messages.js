@@ -36,8 +36,8 @@ export const get = async (req, res) => {
 
 export const create = async (req, res) => {
     const message = new Message();
-    message.text = req.body.text;
-    message.username = req.body.username;
+    message.text = req.body.message ?? req.body.text;
+    message.username = req.body.user ?? req.body.username;
 
     try {
         await message.save();
@@ -56,8 +56,10 @@ export const update = async (req, res) => {
     const message = await findMessage(req.params.id);
     if (!message) return notFound(res, req.params.id);
 
-    if (req.body.text !== undefined) message.text = req.body.text;
-    if (req.body.username !== undefined) message.username = req.body.username;
+    const text = req.body.message ?? req.body.text;
+    const username = req.body.user ?? req.body.username;
+    if (text !== undefined) message.text = text;
+    if (username !== undefined) message.username = username;
 
     try {
         await message.save();
