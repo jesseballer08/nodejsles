@@ -12,6 +12,16 @@ const findMessage = async (id) => {
     return null;
 };
 
+// Haal user/text uit de body, ook als die genest in "message" zit
+// of als de velden "username"/"message" heten
+const readInput = (body = {}) => {
+    const src = body.message && typeof body.message === 'object' ? body.message : body;
+    const text = typeof src.text === 'string' ? src.text
+        : typeof src.message === 'string' ? src.message : undefined;
+    const username = src.user ?? src.username;
+    return { text, username };
+};
+
 const notFound = (res, id) =>
     res.status(404).json({ status: 'fail', message: `Message ${id} not found`, data: null });
 
@@ -40,8 +50,9 @@ export const get = async (req, res) => {
 
 export const create = async (req, res) => {
     const message = new Message();
-    message.text = req.body.message ?? req.body.text;
-    message.username = req.body.user ?? req.body.username;
+    const { text, username } = readInput(req.body);
+    message.text = text;
+    message.username = username;
 
     try {
         await message.save();
@@ -60,8 +71,7 @@ export const update = async (req, res) => {
     const message = await findMessage(req.params.id);
     if (!message) return notFound(res, req.params.id);
 
-    const text = req.body.message ?? req.body.text;
-    const username = req.body.user ?? req.body.username;
+    const { text, username } = readInput(req.body);
     if (text !== undefined) message.text = text;
     if (username !== undefined) message.username = username;
 
